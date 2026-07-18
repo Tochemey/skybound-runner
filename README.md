@@ -1,7 +1,7 @@
 # Skybound Runner — Browser Game powered by GoAkt
 
 <p align="center">
-  <a href="https://github.com/Tochemey/skybound-runner/actions/workflows/ci.yml"><img src="https://github.com/Tochemey/skybound-runner/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Tochemey/skybound-runner/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Tochemey/skybound-runner/ci.yml?branch=main&label=build" alt="CI"></a>
   <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/Tochemey/skybound-runner" alt="Go Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://github.com/Tochemey/goakt"><img src="https://img.shields.io/badge/powered%20by-GoAkt-7d3fbf" alt="GoAkt"></a>
