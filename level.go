@@ -1,3 +1,27 @@
+/*
+MIT License
+
+Copyright (c) 2026 GoAkt Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package main
 
 // Level is a fully-built stage: its tile grid, enemy spawns, the entrance
@@ -99,6 +123,29 @@ func goombaAt(id, col, topRow int) EnemyState {
 	return e
 }
 
+// flyer places a hovering enemy anchored at (col, row); it patrols a short
+// horizontal range and bobs on a sine wave. Stompable from above.
+func flyer(id, col, row int) EnemyState {
+	return EnemyState{
+		ID:    id,
+		Kind:  EnemyFlyer,
+		X:     float64(col),
+		Y:     float64(row),
+		BaseX: float64(col),
+		BaseY: float64(row),
+		Dir:   1,
+		Alive: true,
+	}
+}
+
+// spiky places a spiked walker on the surface. It cannot be stomped — jump
+// over it or avoid it entirely.
+func spiky(id, col int) EnemyState {
+	e := goomba(id, col)
+	e.Kind = EnemySpiky
+	return e
+}
+
 // stageOne is a gentle introduction. Its platforms stay within the height of
 // a normal jump so players can learn movement before the later-stage routes.
 func stageOne() Level {
@@ -164,6 +211,7 @@ func stageTwo() Level {
 		goombaAt(3, 53, surfaceRow-3),
 		goomba(4, 64),
 		goomba(5, 78),
+		flyer(6, 36, surfaceRow-4),
 	}
 	return lv
 }
@@ -212,6 +260,8 @@ func stageThree() Level {
 		goomba(5, 68),
 		goomba(6, 72),
 		goomba(7, 79),
+		spiky(8, 46),
+		flyer(9, 55, surfaceRow-5),
 	}
 	return lv
 }
@@ -299,6 +349,7 @@ func pipeVault() Level {
 	placeCoinArc(t, 41, surfaceRow-5, 5)
 	lv.Enemies = []EnemyState{
 		goomba(1, 20), goombaAt(2, 25, surfaceRow-2), goombaAt(3, 43, surfaceRow-3), goomba(4, 61), goomba(5, 78),
+		flyer(6, 49, surfaceRow-5),
 	}
 	return lv
 }
@@ -322,6 +373,7 @@ func pipeRun() Level {
 	placeCoinArc(t, 55, surfaceRow-6, 5)
 	lv.Enemies = []EnemyState{
 		goomba(1, 17), goombaAt(2, 30, surfaceRow-3), goomba(3, 42), goombaAt(4, 56, surfaceRow-4), goomba(5, 67), goomba(6, 77),
+		flyer(7, 51, surfaceRow-5),
 	}
 	return lv
 }
@@ -342,6 +394,7 @@ func emberSteps() Level {
 	placeCoinArc(t, 67, surfaceRow-6, 5)
 	lv.Enemies = []EnemyState{
 		goomba(1, 20), goombaAt(2, 31, surfaceRow-3), goomba(3, 37), goomba(4, 53), goombaAt(5, 69, surfaceRow-4), goomba(6, 76),
+		spiky(7, 50), flyer(8, 21, surfaceRow-4),
 	}
 	return lv
 }
@@ -363,6 +416,7 @@ func emberSpan() Level {
 	placeCoinArc(t, 54, surfaceRow-6, 5)
 	lv.Enemies = []EnemyState{
 		goomba(1, 15), goombaAt(2, 29, surfaceRow-4), goomba(3, 35), goombaAt(4, 44, surfaceRow-3), goombaAt(5, 55, surfaceRow-4), goomba(6, 75),
+		flyer(7, 50, surfaceRow-6), spiky(8, 30),
 	}
 	return lv
 }
@@ -388,6 +442,7 @@ func emberCrown() Level {
 	lv.Enemies = []EnemyState{
 		goomba(1, 13), goombaAt(2, 24, surfaceRow-3), goombaAt(3, 33, surfaceRow-4), goomba(4, 45),
 		goombaAt(5, 57, surfaceRow-5), goomba(6, 68), goombaAt(7, 71, surfaceRow-4), goomba(8, 79),
+		spiky(9, 52), flyer(10, 44, surfaceRow-5), spiky(11, 20),
 	}
 	return lv
 }

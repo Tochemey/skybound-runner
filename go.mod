@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/coder/websocket v1.8.15
 	github.com/google/uuid v1.6.0
-	github.com/tochemey/goakt/v4 v4.4.0-beta.1
+	github.com/tochemey/goakt/v4 v4.4.0
 )
 
 require (
@@ -45,7 +45,7 @@ require (
 	github.com/tidwall/btree v1.8.1 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/redcon v1.6.2 // indirect
-	github.com/tochemey/olric v0.3.16 // indirect
+	github.com/tochemey/olric v0.3.17 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
@@ -67,4 +67,14 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
+)
+
+exclude (
+	github.com/armon/go-metrics v0.4.2
+	github.com/armon/go-metrics v0.5.0
+	github.com/armon/go-metrics v0.5.1
+	github.com/armon/go-metrics v0.5.2
+	github.com/armon/go-metrics v0.5.3
+	github.com/armon/go-metrics v0.5.4
+	github.com/armon/go-metrics v0.6.0
 )

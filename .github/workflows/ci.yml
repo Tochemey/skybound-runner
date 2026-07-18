@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6 # version comes from package.json "packageManager"
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # The Go binary go:embeds web/main.js, so the TypeScript client must be
+      # compiled before any Go build, vet, test, or lint step.
+      - name: Build web client
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # .golangci.yml runs with modules-download-mode: vendor; the vendor
+      # directory is gitignored, so recreate it here.
+      - name: Vendor Go dependencies
+        run: go mod vendor
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Go tests
+        run: go test -race ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.9.0

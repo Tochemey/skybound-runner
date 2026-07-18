@@ -1,3 +1,27 @@
+/*
+MIT License
+
+Copyright (c) 2026 GoAkt Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package main
 
 import (
@@ -23,7 +47,7 @@ import (
 
 const (
 	// systemName is the GoAkt actor system identifier.
-	systemName = "supermario"
+	systemName = "skybound-runner"
 	// readTimeout is the HTTP server read deadline for browser connections.
 	readTimeout = 10 * time.Second
 	// defaultBindHost is the default host for cluster gossip and remoting.
@@ -38,7 +62,7 @@ var webFS embed.FS
 var (
 	httpPort      = flag.Int("http-port", 8080, "HTTP/WebSocket port for browser clients")
 	bindHost      = flag.String("bind-host", defaultBindHost, "Host this node advertises for cluster traffic")
-	remotingPort  = flag.Int("remoting-port", 9000, "gRPC port for inter-node actor messaging")
+	remotingPort  = flag.Int("remoting-port", 9000, "Port for inter-node actor messaging")
 	discoveryPort = flag.Int("discovery-port", 9001, "Gossip port used by the static discovery provider")
 	peersPort     = flag.Int("peers-port", 9002, "Cluster peer state-sync port")
 	peers         = flag.String("peers", "", "Comma-separated host:discoveryPort list of cluster bootstrap peers")
@@ -55,6 +79,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+
 	if err := system.Start(ctx); err != nil {
 		logger.Fatal(err)
 	}
@@ -83,7 +108,7 @@ func main() {
 	}
 
 	go func() {
-		logger.Infof("Super Mario listening on http://localhost%s", addr)
+		logger.Infof("Skybound Runner listening on http://localhost%s", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal(err)
 		}
@@ -120,10 +145,10 @@ func buildActorSystem(logger log.Logger) (actor.ActorSystem, error) {
 		WithDiscovery(disco).
 		WithDiscoveryPort(*discoveryPort).
 		WithPeersPort(*peersPort).
-		WithPartitionCount(20).
-		WithBootstrapTimeout(10 * time.Second).
-		WithReadTimeout(3 * time.Second).
-		WithWriteTimeout(3 * time.Second).
+		WithPartitionCount(7).
+		WithBootstrapTimeout(10*time.Second).
+		WithReadTimeout(3*time.Second).
+		WithWriteTimeout(3*time.Second).
 		WithKinds(new(GameActor), new(MatchFactory))
 
 	return actor.NewActorSystem(systemName,
@@ -139,6 +164,7 @@ func peerList(raw, selfHost string, selfPort int) []string {
 	if strings.TrimSpace(raw) == "" {
 		return []string{fmt.Sprintf("%s:%d", selfHost, selfPort)}
 	}
+
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
 	for _, p := range parts {

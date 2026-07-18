@@ -1,3 +1,27 @@
+/*
+MIT License
+
+Copyright (c) 2026 GoAkt Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package main
 
 import "testing"
@@ -27,6 +51,22 @@ func TestCampaignHasThreeWorldsAndTenStages(t *testing.T) {
 		if level.Tiles[groundTopRow][int(level.SpawnX)] != TileGround {
 			t.Fatalf("stage %d spawn has no supporting ground", index)
 		}
+
+		// Enemy IDs must be unique within a stage (the client lerps by ID),
+		// and kinds must be ones both sides understand.
+		seen := map[int]bool{}
+		for _, e := range level.Enemies {
+			if seen[e.ID] {
+				t.Fatalf("stage %d has duplicate enemy id %d", index, e.ID)
+			}
+			seen[e.ID] = true
+			if e.Kind < EnemyCrawler || e.Kind > EnemySpiky {
+				t.Fatalf("stage %d enemy %d has unknown kind %d", index, e.ID, e.Kind)
+			}
+			if e.Kind == EnemyFlyer && (e.BaseX != e.X || e.BaseY != e.Y) {
+				t.Fatalf("stage %d flyer %d anchor not at spawn", index, e.ID)
+			}
+		}
 	}
 
 	if worldCounts[1] != 3 || worldCounts[2] != 3 || worldCounts[3] != 4 {
@@ -34,42 +74,20 @@ func TestCampaignHasThreeWorldsAndTenStages(t *testing.T) {
 	}
 }
 
-func TestQuestionBlockAwardsCoin(t *testing.T) {
-	level, _ := buildStage(0)
-	game := &GameActor{
-		tiles: level.Tiles,
-		mario: MarioState{X: 15, Y: float64(surfaceRow), Facing: 1},
+func TestLaterWorldsIncludeNewEnemyKinds(t *testing.T) {
+	flyers, spikies := 0, 0
+	for index := range campaign {
+		level, _ := buildStage(index)
+		for _, e := range level.Enemies {
+			switch e.Kind {
+			case EnemyFlyer:
+				flyers++
+			case EnemySpiky:
+				spikies++
+			}
+		}
 	}
-
-	game.hitBlockFromBelow(surfaceRow - 1)
-
-	if got, want := game.coins, 1; got != want {
-		t.Fatalf("coins = %d, want %d", got, want)
-	}
-	if got, want := game.score, coinScore; got != want {
-		t.Fatalf("score = %d, want %d", got, want)
-	}
-	if got := game.tiles[surfaceRow-1][15]; got != TileBrick {
-		t.Fatalf("question block = %d, want TileBrick", got)
-	}
-}
-
-func TestFlagStartsStageClearTransition(t *testing.T) {
-	level, _ := buildStage(0)
-	game := &GameActor{
-		stage:    0,
-		tiles:    level.Tiles,
-		mario:    MarioState{X: level.FlagX - 1, Y: level.SpawnY},
-		flagX:    level.FlagX,
-		timeLeft: 100,
-	}
-
-	game.checkFlag()
-
-	if !game.stageClear {
-		t.Fatal("flag did not start stage-clear transition")
-	}
-	if got, want := game.transitionTicks, stageClearTicks; got != want {
-		t.Fatalf("transition ticks = %d, want %d", got, want)
+	if flyers == 0 || spikies == 0 {
+		t.Fatalf("campaign has %d flyers and %d spikies, want both > 0", flyers, spikies)
 	}
 }

@@ -1,4 +1,4 @@
-# Cross-platform Makefile for the Super Mario GoAkt game.
+# Cross-platform Makefile for the Skybound Runner GoAkt game.
 #
 # Works with GNU Make on both Windows and Linux/macOS. On Windows, recipes
 # run under cmd.exe (the default make shell); on Unix they run under /bin/sh.
@@ -12,7 +12,7 @@
 #   make clean      remove build artifacts
 #   make help       list all targets
 
-BINARY := supermario
+BINARY := skybound-runner
 
 ifeq ($(OS),Windows_NT)
 	BIN       := bin/$(BINARY).exe
@@ -60,7 +60,7 @@ clean:
 
 ## help: list available targets
 help:
-	@echo Super Mario (GoAkt) - available make targets:
+	@echo Skybound Runner (GoAkt) - available make targets:
 	@echo   make all     - build client + server (default)
 	@echo   make build   - compile client and Go binary into ./bin
 	@echo   make run     - build then start the server (http://localhost:8080)

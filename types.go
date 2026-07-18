@@ -1,3 +1,27 @@
+/*
+MIT License
+
+Copyright (c) 2026 GoAkt Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package main
 
 // Level dimensions and rendering constants shared by the server and client.
@@ -58,6 +82,7 @@ const (
 	TilePipe
 	TileFlag
 	TileCoin
+	TileCheckpoint
 )
 
 // StageTheme selects the presentation palette for a campaign stage.
@@ -69,7 +94,7 @@ const (
 	ThemeEmberRuins
 )
 
-// MarioState is the player character position and velocity sent each tick.
+// MarioState is one player character's position and status sent each tick.
 type MarioState struct {
 	X        float64 `json:"x"`
 	Y        float64 `json:"y"`
@@ -78,9 +103,19 @@ type MarioState struct {
 	OnGround bool    `json:"onGround"`
 	Facing   int     `json:"facing"` // -1 left, 1 right
 	Dead     bool    `json:"dead"`
+	Shield   bool    `json:"shield"` // holds a one-hit shield power-up
+	Invuln   int     `json:"invuln"` // post-hit invulnerability ticks remaining
+	Crouch   bool    `json:"crouch"`
 }
 
-// EnemyState is a single enemy on the level. Kind 0 is a Goomba.
+// Enemy kinds. Mirrored in web/main.ts.
+const (
+	EnemyCrawler = 0 // walks, turns at walls and ledges, stompable
+	EnemyFlyer   = 1 // hovers on a sine path, stompable
+	EnemySpiky   = 2 // walks, cannot be stomped — all contact hurts
+)
+
+// EnemyState is a single enemy on the level.
 type EnemyState struct {
 	ID    int     `json:"id"`
 	Kind  int     `json:"kind"`
@@ -89,30 +124,64 @@ type EnemyState struct {
 	VY    float64 `json:"vy"`  // vertical velocity (server-side physics)
 	Dir   int     `json:"dir"` // patrol direction: -1 left, 1 right
 	Alive bool    `json:"alive"`
+	Dying int     `json:"dying"` // squash-animation ticks remaining after a stomp
+	BaseX float64 `json:"baseX"` // flyer patrol anchor
+	BaseY float64 `json:"baseY"`
+}
+
+// Item kinds. Mirrored in web/main.ts.
+const (
+	ItemShield = 0 // grants a one-hit shield
+)
+
+// ItemState is a collectible power-up in motion on the level.
+type ItemState struct {
+	ID    int     `json:"id"`
+	Kind  int     `json:"kind"`
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+	VY    float64 `json:"vy"`
+	Dir   int     `json:"dir"`
+	Alive bool    `json:"alive"`
+}
+
+// PlayerView is one player's public state inside a Snapshot.
+type PlayerView struct {
+	Name  string     `json:"name"`
+	Mario MarioState `json:"mario"`
 }
 
 // Snapshot is the wire payload broadcast to the browser every tick.
+//
+// Tiles is a delta: it is only populated on a subscriber's first snapshot and
+// on ticks where the grid changed (coin collected, block hit, stage load).
+// Clients must cache the last received grid. CameraX and You are personalized
+// per subscriber; everything else is shared game state.
 type Snapshot struct {
-	Tick         int          `json:"tick"`
-	T            int64        `json:"t"`
-	Tiles        [][]int8     `json:"tiles"`
-	Mario        MarioState   `json:"mario"`
-	Enemies      []EnemyState `json:"enemies"`
-	CameraX      float64      `json:"cameraX"`
-	Stage        int          `json:"stage"`       // zero-based current stage index
-	TotalStages  int          `json:"totalStages"` // number of stages in the game
-	World        int          `json:"world"`       // one-based campaign world number
-	StageInWorld int          `json:"stageInWorld"`
-	StageName    string       `json:"stageName"`
-	Theme        StageTheme   `json:"theme"`
-	StageClear   bool         `json:"stageClear"`
-	Score        int          `json:"score"`
-	Coins        int          `json:"coins"`
-	Lives        int          `json:"lives"`
-	TimeLeft     int          `json:"timeLeft"`
-	GameOver     bool         `json:"gameOver"`
-	Won          bool         `json:"won"`
-	Paused       bool         `json:"paused"`
+	Tick             int          `json:"tick"`
+	T                int64        `json:"t"`
+	Tiles            [][]int8     `json:"tiles,omitempty"`
+	Players          []PlayerView `json:"players"`
+	You              int          `json:"you"` // index into Players for this subscriber
+	Enemies          []EnemyState `json:"enemies"`
+	Items            []ItemState  `json:"items"`
+	CameraX          float64      `json:"cameraX"`
+	Stage            int          `json:"stage"`       // zero-based current stage index
+	TotalStages      int          `json:"totalStages"` // number of stages in the game
+	World            int          `json:"world"`       // one-based campaign world number
+	StageInWorld     int          `json:"stageInWorld"`
+	StageName        string       `json:"stageName"`
+	Theme            StageTheme   `json:"theme"`
+	StageClear       bool         `json:"stageClear"`
+	Score            int          `json:"score"`
+	Coins            int          `json:"coins"`
+	Lives            int          `json:"lives"`
+	TimeLeft         int          `json:"timeLeft"`
+	GameOver         bool         `json:"gameOver"`
+	Won              bool         `json:"won"`
+	Paused           bool         `json:"paused"`
+	CheckpointX      float64      `json:"checkpointX"` // -1 when the stage has none
+	CheckpointActive bool         `json:"checkpointActive"`
 }
 
 // tick is the internal scheduled message that drives the 60 Hz game loop.
