@@ -51,11 +51,6 @@ linters:
       excludes:
         - G115
         - G602
-        - G702
-        - G703
-        - G704
-        - G117
-        - G118
     misspell:
       # Codebase uses British spellings throughout. The locale is US so
       # misspell flags American forms as the "correct" target, and the
